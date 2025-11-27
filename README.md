@@ -83,4 +83,4 @@ This project is being developed over a 5-week intensive sprint.
 
 ---
 
-*GeneRosetta is a Capstone Project exploring the intersection of Advanced Backend Engineering and Bioinformatics.*
+*GeneRosetta is a Project exploring the intersection of Advanced Backend Engineering and Bioinformatics.*
