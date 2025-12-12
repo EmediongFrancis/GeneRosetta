@@ -17,6 +17,10 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# FORCE LOAD .ENV
+env_path = BASE_DIR / '.env'
+load_dotenv(env_path)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -39,6 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Local apps
+    'core',
+    'analysis',
 ]
 
 MIDDLEWARE = [
@@ -78,12 +86,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('USER'),
+        'USER': 'benditofrancis',
         'PASSWORD': os.getenv('PASSWORD'),
         'HOST': os.getenv('HOST'),
         'PORT': os.getenv('PORT'),
     }
 }
+
+AUTH_USER_MODEL = 'core.User'
 
 
 # Password validation
