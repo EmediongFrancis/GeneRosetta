@@ -42,7 +42,7 @@ class AnalyzeView(APIView):
                 return Response({
                     "id": project.id,
                     "status": project.status,
-                    "message": "File accepted. Processing pending."
+                    "message": "DNA sequence accepted. Processing pending."
                 }, status=status.HTTP_201_CREATED)
 
             except ValidationError as e:
