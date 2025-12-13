@@ -6,6 +6,7 @@ from .serializers import AnalysisInputSerializer
 from .services.ingest import IngestService
 from .models import AnalysisProject
 from .tasks import run_analysis_pipeline
+from django.shortcuts import get_object_or_404
 
 class AnalyzeView(APIView):
     """
@@ -54,3 +55,24 @@ class AnalyzeView(APIView):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class ProjectStatusView(APIView):
+    """
+    GET /api/status/{uuid}/
+    Poll this endpoint to check progress.
+    """
+    def get(self, request, project_id):
+        project = get_object_or_404(AnalysisProject, id=project_id)
+        
+        response_data = {
+            "id": project.id,
+            "status": project.status,
+            "organism": None
+        }
+        
+        # If finished, include the result
+        if hasattr(project, 'result'):
+            response_data['organism'] = project.result.organism # type: ignore
+
+        return Response(response_data)    
