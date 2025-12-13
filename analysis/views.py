@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from .serializers import AnalysisInputSerializer
 from .services.ingest import IngestService
 from .models import AnalysisProject
+from .tasks import run_analysis_pipeline
 
 class AnalyzeView(APIView):
     """
@@ -38,7 +39,10 @@ class AnalyzeView(APIView):
                     status='PENDING'
                 )
 
-                # 4. Return the UUID "Receipt"
+                # 4. Trigger the Background Task
+                run_analysis_pipeline.delay(project.id)
+
+                # 5. Return the UUID "Receipt"
                 return Response({
                     "id": project.id,
                     "status": project.status,
