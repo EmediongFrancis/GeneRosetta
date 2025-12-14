@@ -29,7 +29,7 @@ class ClinVarClient:
 
             # 2. E-Search: Find the ID of the record
             handle = Entrez.esearch(db="clinvar", term=search_term, retmax=1)
-            record = Entrez.read(handle)
+            record = Entrez.read(handle, validate=False)
             handle.close()
 
             id_list = record['IdList'] # type: ignore
@@ -41,14 +41,40 @@ class ClinVarClient:
             # 3. E-Summary: Get the details for that ID
             clinvar_id = id_list[0]
             summary_handle = Entrez.esummary(db="clinvar", id=clinvar_id)
-            summary_record = Entrez.read(summary_handle)
+            summary_record = Entrez.read(summary_handle, validate=False)
             summary_handle.close()
 
             # 4. Parse the Result
             # The structure of the response is messy. We look for 'clinical_significance'.
             data = summary_record['DocumentSummarySet']['DocumentSummary'][0] # type: ignore
-            significance = data.get('clinical_significance', {}).get('description', 'Unknown')
-            disease_name = data.get('trait_set', [{}])[0].get('trait_name', 'Unspecified Condition')
+            # A. Extract Significance (The Waterfall)
+            # Priority 1: Germline Classification (Modern standard for hereditary diseases)
+            # Priority 2: Clinical Significance (Legacy/Aggregate field)
+            significance = "Unknown"
+            
+            if 'germline_classification' in data and 'description' in data['germline_classification']:
+                significance = data['germline_classification']['description']
+            elif 'clinical_significance' in data and 'description' in data['clinical_significance']:
+                significance = data['clinical_significance']['description']
+            
+            # B. Extract Disease Name (The Filter)
+            # We look through the 'trait_set' list.
+            # We skip generic terms like "not provided" or "All highly penetrant phenotypes"
+            disease_name = "Unspecified Condition"
+            traits = data.get('trait_set', [])
+            
+            ignored_terms = ["not provided", 
+                             "not specified",
+                             "see cases",
+                             "all highly penetrant phenotypes",
+                             "Unspecified Condition"
+                             ]
+            
+            for trait in traits:
+                name = trait.get('trait_name', '')
+                if name and name.lower() not in ignored_terms:
+                    disease_name = name
+                    break # Stop at the first real disease name found
 
             return {
                 "significance": significance, # e.g., "Pathogenic", "Benign"
