@@ -6,6 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # We will override this with the lowercase version in the steps below
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -19,6 +20,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # --- FIX START: Force Lowercase Image Name ---
+      - name: Lowercase Repo Name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+      # --- FIX END ---
+
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
@@ -31,6 +37,7 @@ jobs:
         with:
           context: .
           push: true
+          # Use the lowercase env variable we created above
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
   deploy:
@@ -59,18 +66,20 @@ jobs:
           script: |
             cd /opt/generosetta
             
-            # Export Repo Name for docker-compose
-            export GITHUB_REPOSITORY=${{ github.repository }}
+            # --- FIX START: Force Lowercase for the Pull Command ---
+            # Convert "EmediongFrancis/GeneRosetta" to "emediongfrancis/generosetta"
+            export GITHUB_REPOSITORY=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            # --- FIX END ---
             
             # Login to GHCR on the server
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Pull new images
+            # Pull new images (using the lowercase name)
             docker compose pull
             
             # Restart containers
             docker compose up -d --remove-orphans
             
-            # Run Migrations & Static Files inside the container
+            # Run Migrations & Static Files
             docker compose exec -T web python manage.py migrate
             docker compose exec -T web python manage.py collectstatic --noinput
