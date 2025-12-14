@@ -1,5 +1,5 @@
 # Use python 3.10 slim (smaller image)
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 # Set environment variables
 # PYTHONDONTWRITEBYTECODE: Prevents Python from writing .pyc files
