@@ -1,0 +1,49 @@
+services:
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest # We will replace this variable in CI/CD
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - static_volume:/app/staticfiles
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  worker:
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
+    command: celery -A config worker --loglevel=info
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/app/staticfiles
+    depends_on:
+      - web
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    restart: always
+
+  redis:
+    image: redis:alpine
+    restart: always
+
+volumes:
+  postgres_data:
+  static_volume:
