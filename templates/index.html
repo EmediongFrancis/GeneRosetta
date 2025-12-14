@@ -1,76 +1,104 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-8">
+<div class="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
     
-    <!-- 1. UPLOAD SECTION -->
-    <div id="upload-section" class="bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-2xl">
-        <h2 class="text-xl font-semibold mb-4">Analyze Sequence</h2>
-        <div id="error-banner" class="hidden bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-lg mb-4 flex items-center">
-    <span class="text-xl mr-3">⚠️</span>
-    <span id="error-text">Something went wrong.</span>
-</div>
-
-        {% if user.is_authenticated %}
-<div class="mb-8">
-    <h3 class="text-lg font-bold text-slate-300 mb-2">My Recent Analysis</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- We will populate this with real data later -->
-        <div class="bg-slate-800 p-4 rounded border border-slate-700">
-            <div class="text-xs text-slate-500">2 mins ago</div>
-            <div class="font-bold text-blue-400">Homo sapiens (INS)</div>
-            <div class="text-xs text-slate-400">Function Analysis</div>
+    <!-- 1. HEADER & HISTORY SECTION -->
+    <div class="space-y-6">
+        <div class="text-center mb-8">
+            <h2 class="text-4xl font-bold text-white mb-2">Unlock the Genome</h2>
+            <p class="text-slate-400">Upload raw sequence data. Get instant biological insights.</p>
         </div>
-    </div>
-</div>
-{% endif %}
 
+        {% if user.is_authenticated and recent_projects %}
+        <div class="mb-8">
+            <h3 class="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
+                <span>🕒</span> Your Recent Analysis
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for project in recent_projects %}
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 hover:border-blue-500 transition cursor-pointer group relative overflow-hidden">
+                    <div class="text-xs text-slate-500 mb-1">{{ project.created_at|timesince }} ago</div>
+                    <div class="font-bold text-white group-hover:text-blue-400 transition truncate">
+                        {{ project.result.organism|default:"Processing..." }}
+                    </div>
+                    <div class="text-xs text-slate-400 truncate mt-1">
+                        ID: {{ project.id|stringformat:".8s" }}...
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 2. UPLOAD CARD -->
+    <div id="upload-section" class="bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-2xl relative">
+        
+        <!-- Error Banner (Hidden by default) -->
+        <div id="error-banner" class="hidden bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-lg mb-6 flex items-center animate-pulse">
+            <span class="text-xl mr-3">⚠️</span>
+            <span id="error-text">Something went wrong.</span>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4 text-blue-100">Analyze New Sequence</h2>
+        
         <form id="analyze-form" class="space-y-4">
             {% csrf_token %}
             <div>
-                <label class="block text-sm text-slate-400 mb-1">Paste DNA Sequence (FASTA/Raw)</label>
-                <textarea name="raw_text" rows="4" 
-                    class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                <label class="block text-sm text-slate-400 mb-2">Paste DNA Sequence (FASTA/Raw)</label>
+                <textarea name="raw_text" rows="5" 
+                    class="w-full bg-slate-900 border border-slate-600 rounded-lg p-4 text-mono text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-600"
                     placeholder="ATGC..."></textarea>
             </div>
             <button type="submit" 
-                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded font-bold transition">
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white py-3.5 rounded-lg font-bold shadow-lg shadow-blue-500/20 transition-all transform hover:-translate-y-0.5">
                 🚀 Launch Analysis
             </button>
         </form>
     </div>
 
-    <!-- 2. LOADING STATE (Hidden by default) -->
-    <div id="loading-section" class="hidden text-center py-12">
-        <div class="animate-spin text-4xl mb-4">🧬</div>
-        <p class="text-xl text-blue-300 animate-pulse">Processing Sequence...</p>
-        <p class="text-sm text-slate-500">Identifying Organism • Calculating Physics • Folding Protein</p>
+    <!-- 3. LOADING STATE (Hidden by default) -->
+    <div id="loading-section" class="hidden text-center py-16">
+        <div class="relative w-24 h-24 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-blue-500/30 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-2xl">🧬</div>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2">Analyzing...</h3>
+        <p class="text-blue-300 animate-pulse">Identifying Organism • Calculating Physics • Folding Protein</p>
     </div>
 
-    <!-- 3. RESULTS SECTION (Hidden by default) -->
+    <!-- 4. RESULTS SECTION (Hidden by default) -->
     <div id="results-section" class="hidden space-y-6">
         
         <!-- Metadata Header -->
-        <div class="flex items-center space-x-4 bg-slate-800 p-4 rounded-lg">
-            <div class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded text-sm font-bold" id="res-organism">
-                Organism
+        <div class="flex items-center justify-between bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <div class="bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
+                <span>🔬</span> <span id="res-organism">Organism</span>
             </div>
-            <div class="text-slate-300 text-sm" id="res-id">ID: ...</div>
+            <div class="text-slate-400 text-xs font-mono bg-slate-900 px-2 py-1 rounded" id="res-id">ID: ...</div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Left: The Narrative Report -->
-            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                <h3 class="text-lg font-bold text-blue-400 mb-4">Analysis Report</h3>
-                <div id="res-text" class="prose prose-invert prose-p:text-slate-300 prose-strong:text-blue-400 max-w-none leading-relaxed">
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 h-[500px] overflow-y-auto">
+                <h3 class="text-lg font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">Analysis Report</h3>
+                <!-- Used Prose classes for Markdown styling -->
+                <div id="res-text" class="prose prose-invert prose-sm max-w-none prose-p:text-slate-300 prose-strong:text-blue-400 prose-headings:text-white leading-relaxed">
                     <!-- Report goes here -->
                 </div>
             </div>
 
             <!-- Right: The 3D Viewer -->
-            <div class="bg-white rounded-xl overflow-hidden shadow-lg">
-                <div id="molecule-viewer" class="molecule-container"></div>
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-slate-700 h-[500px]">
+                <div id="molecule-viewer" class="molecule-container h-full w-full"></div>
             </div>
+        </div>
+        
+        <!-- Reset Button -->
+        <div class="text-center pt-4">
+            <button onclick="location.reload()" class="text-slate-400 hover:text-white underline text-sm">Analyze Another Sequence</button>
         </div>
     </div>
 
@@ -82,38 +110,52 @@
     const uploadSec = document.getElementById('upload-section');
     const loadingSec = document.getElementById('loading-section');
     const resultSec = document.getElementById('results-section');
+    const errorBanner = document.getElementById('error-banner');
+    const errorText = document.getElementById('error-text');
     
     // 3Dmol Viewer Instance
     let viewer = null;
 
+    function showError(message) {
+        // Reset UI state
+        loadingSec.classList.add('hidden');
+        uploadSec.classList.remove('hidden');
+        
+        // Show error
+        errorText.innerText = message;
+        errorBanner.classList.remove('hidden');
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        errorBanner.classList.add('hidden'); // Hide previous errors
         
         // 1. Get Data
         const formData = new FormData(form);
         const rawText = formData.get('raw_text');
 
+        // 2. Client-side Validation
         if (!rawText || rawText.trim() === "") {
-        // Shake the box or show a red border
-        const textarea = form.querySelector('textarea');
-        textarea.classList.add('ring-2', 'ring-red-500');
-        textarea.placeholder = "⚠️ Please paste a sequence first!";
+            const textarea = form.querySelector('textarea');
+            textarea.classList.add('ring-2', 'ring-red-500', 'bg-red-900/10');
+            textarea.placeholder = "⚠️ Please paste a sequence first!";
+            
+            setTimeout(() => {
+                textarea.classList.remove('ring-2', 'ring-red-500', 'bg-red-900/10');
+                textarea.placeholder = "ATGC...";
+            }, 2000);
+            return;
+        }
         
-        // Remove the red ring after 2 seconds
-        setTimeout(() => {
-            textarea.classList.remove('ring-2', 'ring-red-500');
-            textarea.placeholder = "ATGC...";
-        }, 2000);
-        
-        return; // STOP HERE. Do not show spinner.
-    }
-        
-        // 2. UI Transition -> Loading
+        // 3. UI Transition -> Loading
         uploadSec.classList.add('hidden');
         loadingSec.classList.remove('hidden');
 
         try {
-            // 3. POST to API
+            // 4. POST to API
             const response = await fetch('/api/analyze/', {
                 method: 'POST',
                 headers: {
@@ -124,51 +166,47 @@
             });
             
             const data = await response.json();
-            const uuid = data.id;
             
-            // 4. Poll for Status
-            pollStatus(uuid);
+            if (!response.ok) {
+                throw new Error(data.error || "Server rejected the request.");
+            }
+
+            // 5. Start Polling
+            pollStatus(data.id);
 
         } catch (err) {
-            alert("Upload Failed: " + err);
-            location.reload();
+            showError(err.message);
         }
     });
 
     async function pollStatus(uuid) {
         const interval = setInterval(async () => {
-            const res = await fetch(`/api/status/${uuid}/`);
-            const data = await res.json();
+            try {
+                const res = await fetch(`/api/status/${uuid}/`);
+                const data = await res.json();
 
-            if (data.status === 'COMPLETED') {
+                if (data.status === 'COMPLETED') {
+                    clearInterval(interval);
+                    renderResults(data);
+                } else if (data.status === 'FAILED') {
+                    clearInterval(interval);
+                    showError("Analysis Failed. Please check if the sequence is valid DNA.");
+                }
+            } catch (err) {
                 clearInterval(interval);
-                renderResults(data);
-            } else if (data.status === 'FAILED') {
-                clearInterval(interval);
-                alert("Analysis Failed via Worker.");
-                location.reload();
+                showError("Network Error: Could not check status.");
             }
-        }, 2000); // Check every 2 seconds
+        }, 2000); 
     }
 
     async function renderResults(data) {
-        // Fetch full details including PDB
-        // (Note: In a real app we might need a separate endpoint for full details, 
-        // but for now let's assume status returns it or we fetch specifically)
-        // Wait, our status endpoint returns organism but maybe not the massive PDB?
-        // Let's create a quick helper logic here.
-        
-        // Ideally we fetch the result object details.
-        // Let's assume the /status/ endpoint returns the PDB and Report if completed.
-        // I need to update the status view to return EVERYTHING if completed.
-        
         loadingSec.classList.add('hidden');
         resultSec.classList.remove('hidden');
 
         document.getElementById('res-organism').innerText = data.organism || "Unknown Organism";
         document.getElementById('res-id').innerText = `ID: ${data.id}`;
         
-        // Inject Report
+        // Inject Markdown Report
         if (data.report && data.report.text) {
              document.getElementById('res-text').innerHTML = marked.parse(data.report.text);
         }
@@ -177,26 +215,15 @@
         if (data.pdb_data) {
             if (!viewer) {
                 viewer = $3Dmol.createViewer(document.getElementById('molecule-viewer'), {
-                    backgroundColor: 'white'
+                    backgroundColor: 'white' // Or 'black' for dark mode viewer
                 });
             }
+            viewer.clear(); // Clear previous models if re-used
             viewer.addModel(data.pdb_data, "pdb");
             viewer.setStyle({}, { cartoon: { color: 'spectrum' } });
             viewer.zoomTo();
             viewer.render();
         }
     }
-
-    function showError(message) {
-    // Hide loading, show upload
-    loadingSec.classList.add('hidden');
-    uploadSec.classList.remove('hidden');
-    
-    // Show error banner
-    const banner = document.getElementById('error-banner');
-    const text = document.getElementById('error-text');
-    text.innerText = message;
-    banner.classList.remove('hidden');
-}
 </script>
 {% endblock %}
