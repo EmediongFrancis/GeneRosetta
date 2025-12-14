@@ -6,6 +6,25 @@
     <!-- 1. UPLOAD SECTION -->
     <div id="upload-section" class="bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-2xl">
         <h2 class="text-xl font-semibold mb-4">Analyze Sequence</h2>
+        <div id="error-banner" class="hidden bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-lg mb-4 flex items-center">
+    <span class="text-xl mr-3">⚠️</span>
+    <span id="error-text">Something went wrong.</span>
+</div>
+
+        {% if user.is_authenticated %}
+<div class="mb-8">
+    <h3 class="text-lg font-bold text-slate-300 mb-2">My Recent Analysis</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- We will populate this with real data later -->
+        <div class="bg-slate-800 p-4 rounded border border-slate-700">
+            <div class="text-xs text-slate-500">2 mins ago</div>
+            <div class="font-bold text-blue-400">Homo sapiens (INS)</div>
+            <div class="text-xs text-slate-400">Function Analysis</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
         <form id="analyze-form" class="space-y-4">
             {% csrf_token %}
             <div>
@@ -73,6 +92,21 @@
         // 1. Get Data
         const formData = new FormData(form);
         const rawText = formData.get('raw_text');
+
+        if (!rawText || rawText.trim() === "") {
+        // Shake the box or show a red border
+        const textarea = form.querySelector('textarea');
+        textarea.classList.add('ring-2', 'ring-red-500');
+        textarea.placeholder = "⚠️ Please paste a sequence first!";
+        
+        // Remove the red ring after 2 seconds
+        setTimeout(() => {
+            textarea.classList.remove('ring-2', 'ring-red-500');
+            textarea.placeholder = "ATGC...";
+        }, 2000);
+        
+        return; // STOP HERE. Do not show spinner.
+    }
         
         // 2. UI Transition -> Loading
         uploadSec.classList.add('hidden');
@@ -152,5 +186,17 @@
             viewer.render();
         }
     }
+
+    function showError(message) {
+    // Hide loading, show upload
+    loadingSec.classList.add('hidden');
+    uploadSec.classList.remove('hidden');
+    
+    // Show error banner
+    const banner = document.getElementById('error-banner');
+    const text = document.getElementById('error-text');
+    text.innerText = message;
+    banner.classList.remove('hidden');
+}
 </script>
 {% endblock %}

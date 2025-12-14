@@ -20,6 +20,7 @@ from analysis.views import index
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
     path('api/', include('analysis.urls')), # This makes the endpoint /api/analyze/
     path('', index, name='home'),  # Home page
 ]
