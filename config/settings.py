@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import dj_database_url # type: ignore
 from pathlib import Path
 from dotenv import load_dotenv
 import os
@@ -99,15 +99,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Construct the Database URL from individual Docker env vars if available
+db_user = os.getenv("POSTGRES_USER", "postgres")
+db_password = os.getenv("POSTGRES_PASSWORD", "password")
+db_host = os.getenv("POSTGRES_HOST", "db") # Default to 'db' service name
+db_name = os.getenv("POSTGRES_DB", "generosetta_db")
+db_port = os.getenv("POSTGRES_PORT", "5432")
+
+DATABASE_URL = f"postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': 'benditofrancis',
-        'PASSWORD': os.getenv('PASSWORD'),
-        'HOST': os.getenv('HOST'),
-        'PORT': os.getenv('PORT'),
-    }
+    'default': dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600
+    )
 }
 
 AUTH_USER_MODEL = 'core.User'
@@ -158,6 +163,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

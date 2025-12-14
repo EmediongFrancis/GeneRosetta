@@ -4,7 +4,12 @@ services:
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_volume:/app/staticfiles
-    env_file: .env
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
     depends_on:
       - db
       - redis
@@ -13,7 +18,12 @@ services:
   worker:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
     command: celery -A config worker --loglevel=info
-    env_file: .env
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_HOST=db 
+      - POSTGRES_PORT=5432
     depends_on:
       - db
       - redis
