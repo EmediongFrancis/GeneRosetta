@@ -136,7 +136,7 @@
         
         // Inject Report
         if (data.report && data.report.text) {
-             document.getElementById('res-text').innerHTML = data.report.text.replace(/\n/g, '<br>');
+             document.getElementById('res-text').innerHTML = marked.parse(data.report.text);
         }
 
         // Render 3D Structure
