@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from analysis.views import index
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('analysis.urls')), # This makes the endpoint /api/analyze/
+    path('', index, name='home'),  # Home page
 ]
