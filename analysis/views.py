@@ -9,7 +9,15 @@ from .tasks import run_analysis_pipeline
 from django.shortcuts import get_object_or_404, render
 
 def index(request):
-    return render(request, 'index.html')
+    recent_projects = []
+    if request.user.is_authenticated:
+        # Fetch last 3 completed projects for this user
+        recent_projects = AnalysisProject.objects.filter(
+            user=request.user, 
+            status='COMPLETED'
+        ).order_by('-created_at')[:3]
+        
+    return render(request, 'index.html', {'recent_projects': recent_projects})
 class AnalyzeView(APIView):
     """
     POST /api/analyze/

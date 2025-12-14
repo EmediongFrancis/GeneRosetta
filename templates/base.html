@@ -11,6 +11,7 @@
     <!-- HTMX (AJAX Polling) -->
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
 
+    <!-- Marked.js (Markdown Parser) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <!-- 3Dmol.js (The Molecule Viewer) -->
@@ -24,24 +25,66 @@
             background: #f3f4f6;
             border-radius: 0.5rem;
         }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-white font-sans">
-    <nav class="p-4 border-b border-slate-700 flex justify-between items-center">
-        <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+<body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col">
+    
+    <!-- Fixed Navbar with Blur Effect -->
+    <nav class="p-4 border-b border-slate-700 flex justify-between items-center backdrop-blur-md bg-slate-900/80 fixed w-full z-50 top-0 transition-all duration-300">
+        <a href="{% url 'home' %}" class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 hover:opacity-80 transition cursor-pointer flex items-center gap-2">
             🧬 GeneRosetta
-        </h1>
-        <div>
+        </a>
+        
+        <div class="flex items-center gap-4">
             {% if user.is_authenticated %}
-                <span class="mr-4">{{ user.email }}</span>
+                <!-- User is Logged In -->
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex flex-col items-end">
+                        <span class="text-slate-200 text-sm font-medium">{{ user.email }}</span>
+                        <span class="text-emerald-400 text-xs">Pro Member</span>
+                    </div>
+                    <!-- Logout Button -->
+                    <form method="post" action="{% url 'account_logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm transition border border-slate-600 hover:border-slate-500">
+                            Logout
+                        </button>
+                    </form>
+                </div>
             {% else %}
-                <span class="text-slate-400 text-sm">Guest Mode</span>
+                <!-- User is Guest -->
+                <span class="text-slate-500 text-sm hidden md:block">Guest Mode</span>
+                <a href="{% url 'account_login' %}" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 transform">
+                    Sign In / History
+                </a>
             {% endif %}
         </div>
     </nav>
 
-    <main class="container mx-auto p-4">
+    <!-- Main Content -->
+    <!-- Added pt-24 (Padding Top) to account for fixed navbar height -->
+    <main class="container mx-auto p-4 pt-28 flex-grow">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Simple Footer -->
+    <footer class="border-t border-slate-800 mt-12 py-6 text-center text-slate-500 text-sm">
+        <p>&copy; {% now "Y" %} GeneRosetta. With love from Bendito ❤️</p>
+    </footer>
+
 </body>
 </html>
