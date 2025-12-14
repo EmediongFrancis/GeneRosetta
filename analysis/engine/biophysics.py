@@ -55,6 +55,11 @@ class BiophysicalEngine:
             dict: The numerical differences, or None if invalid input.
         """
         # 1. Lookup the data for both letters
+
+        # Guard Clause: If inputs are missing (e.g. healthy gene), return None immediately.
+        if not old_residue_char or not new_residue_char:
+            return None
+        
         # .get() prevents crashing if a weird letter (like 'X' or 'Z') is passed
         old_aa = BiophysicalEngine.AMINO_ACIDS.get(old_residue_char.upper())
         new_aa = BiophysicalEngine.AMINO_ACIDS.get(new_residue_char.upper())
