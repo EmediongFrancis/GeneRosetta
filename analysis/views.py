@@ -65,14 +65,19 @@ class ProjectStatusView(APIView):
     def get(self, request, project_id):
         project = get_object_or_404(AnalysisProject, id=project_id)
         
-        response_data = {
+        data = {
             "id": project.id,
             "status": project.status,
-            "organism": None
+            "organism": None,
+            "pdb_data": None,
+            "report": None
         }
         
-        # If finished, include the result
         if hasattr(project, 'result'):
-            response_data['organism'] = project.result.organism # type: ignore
+            data['organism'] = project.result.organism # type: ignore
+            # ONLY return heavy data if completed
+            if project.status == 'COMPLETED':
+                data['pdb_data'] = project.result.pdb_data # type: ignore
+                data['report'] = project.result.report # type: ignore
 
-        return Response(response_data)    
+        return Response(data)    
