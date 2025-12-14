@@ -1,6 +1,7 @@
 from celery import shared_task
 import logging
 from .services.scanner import OrganismScanner
+from Bio.Seq import Seq
 from .engine.router import get_strategy
 from .engine.narrative import NarrativeComposer
 from .services.structure import StructureService
@@ -26,6 +27,17 @@ def run_analysis_pipeline(project_id):
         # For this stage of the MVP, we will MOCK the gene context or extract simple ones.
         # Let's assume for the MVP we treat the input as a simple protein sequence for structure
         # and use a fallback context for the narrative if parsing fails.
+
+         # --- NEW TRANSLATION LOGIC START ---
+        # 1. Convert string to Biopython Seq object
+        dna_sequence = Seq(project.input_sequence)
+        
+        # 2. Translate DNA to Protein
+        # to_stop=True means "Stop translating at the first Stop Codon (*)"
+        protein_sequence = str(dna_sequence.translate(to_stop=True))
+        
+        logger.info(f"Translated DNA to Protein: {protein_sequence[:20]}...")
+        # --- NEW TRANSLATION LOGIC END ---
         
         # Mock Context construction (To be replaced by File Parser later)
         # This allows the pipeline to run even if we don't have a sophisticated file parser yet.
@@ -43,7 +55,7 @@ def run_analysis_pipeline(project_id):
         # We assume the input_sequence is an Amino Acid string for ESMFold.
         # If it is DNA, we would need to translate it first (using Biopython .translate()).
         # For safety, let's try to generate structure from the input.
-        pdb_data = StructureService.generate_pdb(project.input_sequence)
+        pdb_data = StructureService.generate_pdb(protein_sequence)
 
         # STEP 4: Narrative Generation
         final_report_text = NarrativeComposer.generate_report(strategy_result)
