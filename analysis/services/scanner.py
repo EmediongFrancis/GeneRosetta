@@ -78,6 +78,7 @@ class OrganismScanner:
             if blast_record.alignments:
                 top_hit_title = blast_record.alignments[0].title
                 organism = OrganismScanner._extract_organism_name(top_hit_title)
+                gene_name = OrganismScanner._extract_gene_name(top_hit_title)
                 logger.info(f"BLAST Success: Identified as {organism}")
             else:
                 logger.warning(f"BLAST finished but returned no matches for Project {project_id}")
@@ -90,7 +91,7 @@ class OrganismScanner:
 
             # Note: We do NOT set status to COMPLETED here yet.
             # In the final pipeline, this is just Step 1 of 3.
-            return organism
+            return organism, gene_name
 
         except Exception as e:
             logger.exception(f"Unexpected Scanner Error: {str(e)}")
@@ -122,3 +123,18 @@ class OrganismScanner:
                 return f"{words[0]} {words[1]}"
         
         return "Unknown Organism"
+    
+    @staticmethod
+    def _extract_gene_name(title_string):
+        """
+        Heuristic: Looks for text inside parentheses often used for gene symbols.
+        Example: "...Homo sapiens insulin (INS), transcript variant..." -> Returns "INS"
+        """
+        # Look for (GENE) pattern
+        match = re.search(r'\(([A-Z0-9]+)\)', title_string)
+        if match:
+            return match.group(1)
+        
+        # Fallback: Look for "mRNA" or "gene" and take the word before it? 
+        # For now, let's return a safe default if regex fails.
+        return "Unknown Gene"
