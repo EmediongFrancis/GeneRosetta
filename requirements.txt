@@ -44,3 +44,6 @@ vine==5.1.0
 virtualenv==20.35.4
 wcwidth==0.2.14
 wheel==0.45.1
+gunicorn==21.2.0
+whitenoise==6.6.0
+dj-database-url==2.1.0
