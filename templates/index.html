@@ -17,15 +17,26 @@
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {% for project in recent_projects %}
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 hover:border-blue-500 transition cursor-pointer group relative overflow-hidden">
-                    <div class="text-xs text-slate-500 mb-1">{{ project.created_at|timesince }} ago</div>
-                    <div class="font-bold text-white group-hover:text-blue-400 transition truncate">
-                        {{ project.result.organism|default:"Processing..." }}
-                    </div>
-                    <div class="text-xs text-slate-400 truncate mt-1">
-                        ID: {{ project.id|stringformat:".8s" }}...
-                    </div>
-                </div>
+                <div onclick="loadHistory('{{ project.id }}')" 
+         class="bg-slate-800 p-4 rounded-xl border border-slate-700 hover:border-blue-500 transition cursor-pointer group relative overflow-hidden transform hover:-translate-y-1 hover:shadow-xl">
+        
+        <div class="text-xs text-slate-500 mb-1 flex justify-between">
+            <span>{{ project.created_at|timesince }} ago</span>
+            {% if project.status == 'COMPLETED' %}
+                <span class="text-emerald-400">● Ready</span>
+            {% else %}
+                <span class="text-amber-400">● {{ project.status }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="font-bold text-white group-hover:text-blue-400 transition truncate text-lg">
+            {{ project.result.organism|default:"Unknown Sequence" }}
+        </div>
+        
+        <div class="text-xs text-slate-400 truncate mt-2 font-mono bg-slate-900/50 p-1 rounded">
+            ID: {{ project.id|stringformat:".8s" }}...
+        </div>
+    </div>
                 {% endfor %}
             </div>
         </div>
@@ -178,6 +189,38 @@
             showError(err.message);
         }
     });
+
+    async function loadHistory(uuid) {
+        // 1. UI Feedback: Show loading screen immediately
+        uploadSec.classList.add('hidden');
+        resultSec.classList.add('hidden'); // Hide current results if any
+        loadingSec.classList.remove('hidden');
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        try {
+            // 2. Fetch the data directly (No polling needed, it's done)
+            const res = await fetch(`/api/status/${uuid}/`);
+            
+            if (!res.ok) throw new Error("Could not fetch project history.");
+            
+            const data = await res.json();
+
+            // 3. Render
+            if (data.status === 'COMPLETED') {
+                renderResults(data);
+            } else if (data.status === 'PROCESSING') {
+                // If they clicked a pending one, start polling
+                pollStatus(uuid);
+            } else {
+                showError("This analysis failed or is corrupted.");
+            }
+
+        } catch (err) {
+            showError(err.message);
+        }
+    }
 
     async function pollStatus(uuid) {
         const interval = setInterval(async () => {

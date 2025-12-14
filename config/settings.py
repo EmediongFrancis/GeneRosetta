@@ -188,3 +188,13 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_REDIRECT_URL = '/'  # Go back to Dashboard after login
 LOGOUT_REDIRECT_URL = '/' # Go back to Dashboard after logout
 SOCIALACCOUNT_LOGIN_ON_GET = True
+# AUTO SIGNUP: Skip the "Sign Up" form if we got all data from Google
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# EMAIL VERIFICATION: Disable for now to prevent "Email sent" blocking pages
+# (Since Google already verified the email, we trust them)
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+# AUTO CONNECT: If a user with this email already exists (e.g. your Superuser),
+# automatically link the Google account to it instead of throwing an error.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
