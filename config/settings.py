@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 ]
 
-SITE_ID = 1
+SITE_ID = 2
 
 
 MIDDLEWARE = [
@@ -187,3 +187,4 @@ SOCIALACCOUNT_PROVIDERS = {
 
 LOGIN_REDIRECT_URL = '/'  # Go back to Dashboard after login
 LOGOUT_REDIRECT_URL = '/' # Go back to Dashboard after logout
+SOCIALACCOUNT_LOGIN_ON_GET = True
