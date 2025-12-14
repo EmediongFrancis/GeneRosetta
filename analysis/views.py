@@ -6,8 +6,10 @@ from .serializers import AnalysisInputSerializer
 from .services.ingest import IngestService
 from .models import AnalysisProject
 from .tasks import run_analysis_pipeline
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 
+def index(request):
+    return render(request, 'index.html')
 class AnalyzeView(APIView):
     """
     POST /api/analyze/
