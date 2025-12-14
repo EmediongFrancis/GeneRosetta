@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    
+    <!-- 1. UPLOAD SECTION -->
+    <div id="upload-section" class="bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-2xl">
+        <h2 class="text-xl font-semibold mb-4">Analyze Sequence</h2>
+        <form id="analyze-form" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">Paste DNA Sequence (FASTA/Raw)</label>
+                <textarea name="raw_text" rows="4" 
+                    class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="ATGC..."></textarea>
+            </div>
+            <button type="submit" 
+                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded font-bold transition">
+                🚀 Launch Analysis
+            </button>
+        </form>
+    </div>
+
+    <!-- 2. LOADING STATE (Hidden by default) -->
+    <div id="loading-section" class="hidden text-center py-12">
+        <div class="animate-spin text-4xl mb-4">🧬</div>
+        <p class="text-xl text-blue-300 animate-pulse">Processing Sequence...</p>
+        <p class="text-sm text-slate-500">Identifying Organism • Calculating Physics • Folding Protein</p>
+    </div>
+
+    <!-- 3. RESULTS SECTION (Hidden by default) -->
+    <div id="results-section" class="hidden space-y-6">
+        
+        <!-- Metadata Header -->
+        <div class="flex items-center space-x-4 bg-slate-800 p-4 rounded-lg">
+            <div class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded text-sm font-bold" id="res-organism">
+                Organism
+            </div>
+            <div class="text-slate-300 text-sm" id="res-id">ID: ...</div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left: The Narrative Report -->
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <h3 class="text-lg font-bold text-blue-400 mb-4">Analysis Report</h3>
+                <div id="res-text" class="prose prose-invert text-sm text-slate-300 leading-relaxed">
+                    <!-- Report goes here -->
+                </div>
+            </div>
+
+            <!-- Right: The 3D Viewer -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg">
+                <div id="molecule-viewer" class="molecule-container"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- THE JAVASCRIPT LOGIC -->
+<script>
+    const form = document.getElementById('analyze-form');
+    const uploadSec = document.getElementById('upload-section');
+    const loadingSec = document.getElementById('loading-section');
+    const resultSec = document.getElementById('results-section');
+    
+    // 3Dmol Viewer Instance
+    let viewer = null;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // 1. Get Data
+        const formData = new FormData(form);
+        const rawText = formData.get('raw_text');
+        
+        // 2. UI Transition -> Loading
+        uploadSec.classList.add('hidden');
+        loadingSec.classList.remove('hidden');
+
+        try {
+            // 3. POST to API
+            const response = await fetch('/api/analyze/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: JSON.stringify({ raw_text: rawText })
+            });
+            
+            const data = await response.json();
+            const uuid = data.id;
+            
+            // 4. Poll for Status
+            pollStatus(uuid);
+
+        } catch (err) {
+            alert("Upload Failed: " + err);
+            location.reload();
+        }
+    });
+
+    async function pollStatus(uuid) {
+        const interval = setInterval(async () => {
+            const res = await fetch(`/api/status/${uuid}/`);
+            const data = await res.json();
+
+            if (data.status === 'COMPLETED') {
+                clearInterval(interval);
+                renderResults(data);
+            } else if (data.status === 'FAILED') {
+                clearInterval(interval);
+                alert("Analysis Failed via Worker.");
+                location.reload();
+            }
+        }, 2000); // Check every 2 seconds
+    }
+
+    async function renderResults(data) {
+        // Fetch full details including PDB
+        // (Note: In a real app we might need a separate endpoint for full details, 
+        // but for now let's assume status returns it or we fetch specifically)
+        // Wait, our status endpoint returns organism but maybe not the massive PDB?
+        // Let's create a quick helper logic here.
+        
+        // Ideally we fetch the result object details.
+        // Let's assume the /status/ endpoint returns the PDB and Report if completed.
+        // I need to update the status view to return EVERYTHING if completed.
+        
+        loadingSec.classList.add('hidden');
+        resultSec.classList.remove('hidden');
+
+        document.getElementById('res-organism').innerText = data.organism || "Unknown Organism";
+        document.getElementById('res-id').innerText = `ID: ${data.id}`;
+        
+        // Inject Report
+        if (data.report && data.report.text) {
+             document.getElementById('res-text').innerHTML = data.report.text.replace(/\n/g, '<br>');
+        }
+
+        // Render 3D Structure
+        if (data.pdb_data) {
+            if (!viewer) {
+                viewer = $3Dmol.createViewer(document.getElementById('molecule-viewer'), {
+                    backgroundColor: 'white'
+                });
+            }
+            viewer.addModel(data.pdb_data, "pdb");
+            viewer.setStyle({}, { cartoon: { color: 'spectrum' } });
+            viewer.zoomTo();
+            viewer.render();
+        }
+    }
+</script>
+{% endblock %}
