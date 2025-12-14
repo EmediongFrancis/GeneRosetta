@@ -10,10 +10,17 @@ ENV PYTHONUNBUFFERED 1
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies (Required for Biopython and Postgres)
+# Install system dependencies
+# build-essential: gcc, make, etc.
+# libpq-dev: Postgres driver
+# libssl-dev & libffi-dev: Required for cryptography/cffi
+# python3-dev: Python C headers
 RUN apt-get update && apt-get install -y \
-    gcc \
+    build-essential \
     libpq-dev \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
