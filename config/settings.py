@@ -29,7 +29,7 @@ load_dotenv(env_path)
 SECRET_KEY = 'django-insecure-6=6*a4y=l_8@8*x@__+w2+ct%l3j=3-55u7wst=n2!+36-$wgm'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Read from Environment Variable (Production) OR default to localhost (Dev)
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
@@ -95,6 +95,11 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{os.getenv('DOMAIN_NAME')}",  # e.g. https://generosetta.cloud
+    f"http://{os.getenv('DOMAIN_NAME')}",   # For local testing if needed
+]
 
 
 # Database
