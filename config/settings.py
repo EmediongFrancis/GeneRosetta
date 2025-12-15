@@ -210,3 +210,8 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 # AUTO CONNECT: If a user with this email already exists (e.g. your Superuser),
 # automatically link the Google account to it instead of throwing an error.
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
